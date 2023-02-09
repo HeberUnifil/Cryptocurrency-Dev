@@ -15,18 +15,28 @@ import requests
 class Blockchain(object):
     # Inicializa a blockchain
     def __init__(self):
-        self.chain = [self.addGenesisBlock()]  #
+        self.chain = [self.addGenesisBlock()]
+        #
         self.pendingTransactions = []
+
         # Blockchains possuem suas transações organizadas em fila, é necessário inicializar uma lista
         self.difficulty = 2
         # Transação como recompensa de por mineração
-        self.minerRewards = 50
-
+        self.minerRewards = 10  # * len(self.pendingTransactions)
         self.blockSize = 10
         self.nodes = set()
+        self.chain = [self.addGenesisBlock()]
 
     def addTransaction(self, sender, reciever, amt, keyString, senderKey):
+        # Checa se o remetente tem o valor a ser transferido
+
+        if amt > self.getBalance(sender):
+            print("Saldo Insuficiente")
+            print(self.getBalance(sender))
+            return False
+
         # Importa as chaves tanto do remetente quanto do destinatário
+
         keyByte = keyString.encode("ASCII")
         senderKeyByte = senderKey.encode("ASCII")
 
@@ -39,7 +49,7 @@ class Blockchain(object):
             return False
 
         # Gera uma nova transação
-        transaction = Transaction(sender, reciever, amt)
+        transaction = Transaction(sender, reciever, (amt - self.minerRewards))
 
         # assina a transação recém criada
         transaction.signTransaction(key, senderKey)
@@ -65,11 +75,12 @@ class Blockchain(object):
         file_out = open("receiver.pem", "wb")
         file_out.write(public_key)
 
-        print(public_key.decode("ASCII"))
+        # print(public_key.decode("ASCII"))
         return key.publickey().export_key().decode("ASCII")
 
     def minePendingTransactions(self, miner):
         lenPT = len(self.pendingTransactions)
+
         # if(lenPT <= 1):
         #     print("Not enough transactions to mine! (Must be > 1)")
         #     return False;
@@ -94,7 +105,7 @@ class Blockchain(object):
             self.chain.append(newBlock)
         print("Mining Transactions Success!")
 
-        payMiner = Transaction("Miner Rewards", miner, self.minerRewards)
+        payMiner = Transaction("Miner Rewards", miner, (self.minerRewards * lenPT))
         self.pendingTransactions = [payMiner]
         return True
 
@@ -104,10 +115,11 @@ class Blockchain(object):
 
     def addGenesisBlock(self):
         tArr = []
-        tArr.append(Transaction("me", "you", 10))
+        tArr.append(Transaction("Blockchain", "Heber", 100))
         genesis = Block(tArr, datetime.now().strftime("%m/%d/%Y, %H:%M:%S"), 0)
 
         genesis.prev = "None"
+
         return genesis
 
     # Cria um novo bloco na cadeia, se baseando no bloco anterior, caso não haja um, sinaliza como bloco anterior vazio
@@ -168,7 +180,7 @@ class Blockchain(object):
 
     def getBalance(self, person):
         balance = 0
-        for i in range(1, len(self.chain)):
+        for i in range(0, len(self.chain)):
             block = self.chain[i]
             try:
                 for j in range(0, len(block.transactions)):
@@ -179,7 +191,7 @@ class Blockchain(object):
                         balance += transaction.amt
             except AttributeError:
                 print("no transaction")
-        return balance + 100
+        return balance
 
 
 class Block(object):
@@ -285,8 +297,8 @@ class Transaction(object):
         if not self.signature or len(self.signature) == 0:
             print("No Signature!")
             return False
-        # print("Signature OK!")
         # Caso todos os demais fatores estiverem corretos, valida a transferência
+
         return True
 
     def signTransaction(self, key, senderKey):

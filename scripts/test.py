@@ -7,28 +7,24 @@ pp = pprint.PrettyPrinter(indent=4)
 Blockchain = Blockchain()
 key = Blockchain.generateKeys()
 
-print(key)
-print("")
+# print(key)
+# print("")
 
-Blockchain.addTransaction("Heber", "Lenhador", 10, key, key)
-# Blockchain.pendingTransactions.append(transaction)
 
+print(Blockchain.pendingTransactions)
+
+# Blockchain.minePendingTransactions("Ariel")
+Blockchain.addTransaction("Heber", "Lenhador", 20, key, key)
 Blockchain.minePendingTransactions("Ariel")
-Blockchain.minePendingTransactions("Heber")
-Blockchain.minePendingTransactions("Heber")
 
-# transactions = []
+Blockchain.addTransaction("Heber", "Lenhador", 100, key, key)
 
-# block = Block(transactions, time(), 0)
-# Blockchain.addBlock(block)
 
-# block = Block(transactions, time(), 1)
-# Blockchain.addBlock(block)
-
-# block = Block(transactions, time(), 2)
-# Blockchain.addBlock(block)
+# print(Blockchain.chain)
 
 pp.pprint(Blockchain.chainJSONencode())
 print("Length: ", len(Blockchain.chain))
 
-print(Blockchain.getBalance("Ariel"))
+
+print(Blockchain.getBalance("Heber"))
+# print(Blockchain.pendingTransactions)
