@@ -5,7 +5,18 @@ import pprint
 pp = pprint.PrettyPrinter(indent=4)
 
 Blockchain = Blockchain()
-transactions = []
+key = Blockchain.generateKeys()
+
+print(key)
+print("")
+
+Blockchain.addTransaction("Heber", "Lenhador", 10, key, key)
+# Blockchain.pendingTransactions.append(transaction)
+
+Blockchain.minePendingTransactions("Ariel")
+
+
+# transactions = []
 
 # block = Block(transactions, time(), 0)
 # Blockchain.addBlock(block)

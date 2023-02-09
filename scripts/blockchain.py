@@ -15,7 +15,7 @@ import requests
 class Blockchain(object):
     # Inicializa a blockchain
     def __init__(self):
-        self.chain = []
+        self.chain = [self.addGenesisBlock()]  #
         self.pendingTransactions = []
         # Blockchains possuem suas transações organizadas em fila, é necessário inicializar uma lista
         self.difficulty = 2
@@ -83,7 +83,7 @@ class Blockchain(object):
 
             newBlock = Block(
                 transactionSlice,
-                datetime.now().strftime("%m/%d/%Y, %H:%M:%S"),
+                datetime.now().strftime("%d/%m/%Y, %H:%M:%S"),
                 len(self.chain),
             )
             # print(type(self.getLastBlock()));
@@ -101,6 +101,14 @@ class Blockchain(object):
     # Busca pelo bloco anterior da cadeia
     def getLastBlock(self):
         return self.chain[-1]
+
+    def addGenesisBlock(self):
+        tArr = []
+        tArr.append(Transaction("me", "you", 10))
+        genesis = Block(tArr, datetime.now().strftime("%m/%d/%Y, %H:%M:%S"), 0)
+
+        genesis.prev = "None"
+        return genesis
 
     # Cria um novo bloco na cadeia, se baseando no bloco anterior, caso não haja um, sinaliza como bloco anterior vazio
     def addBlock(self, block):
@@ -136,6 +144,42 @@ class Blockchain(object):
             blockArrJSON.append(blockJSON)
 
         return blockArrJSON
+
+
+def chainJSONdecode(self, chainJSON):
+    chain = []
+    for blockJSON in chainJSON:
+        tArr = []
+        for tJSON in blockJSON["transactions"]:
+            transaction = Transaction(tJSON["sender"], tJSON["reciever"], tJSON["amt"])
+            transaction.time = tJSON["time"]
+            transaction.hash = tJSON["hash"]
+            tArr.append(transaction)
+
+        block = Block(tArr, blockJSON["time"], blockJSON["index"])
+        block.hash = blockJSON["hash"]
+        block.prev = blockJSON["prev"]
+        block.nonse = blockJSON["nonse"]
+        block.gym = blockJSON["gym"]
+
+        chain.append(block)
+    return chain
+
+
+def getBalance(self, person):
+    balance = 0
+    for i in range(1, len(self.chain)):
+        block = self.chain[i]
+        try:
+            for j in range(0, len(block.transactions)):
+                transaction = block.transactions[j]
+                if transaction.sender == person:
+                    balance -= transaction.amt
+                if transaction.reciever == person:
+                    balance += transaction.amt
+        except AttributeError:
+            print("no transaction")
+    return balance + 100
 
 
 class Block(object):
@@ -182,10 +226,26 @@ class Block(object):
         while self.hash[0:difficulty] != hashPuzzle:
             self.nonce += 1
             self.hash = self.calculateHash()
-            # print(len(hashPuzzle));
-            # print(self.hash[0:difficulty]);
+            # print(len(hashPuzzle))
+            # print(self.hash[0:difficulty])
+
+            # EXIBIÇÃO DO PROCESSO DE MINERAÇÀO
+            # print(self.nonce)
+            # print("hash attempt", self.hash)
+            # print("hash desejado", hashPuzzle)
+
         print("Block Mined!")
         return True
+
+    def hasValidTransactions(self):
+        for i in range(0, len(self.transactions)):
+            transaction = self.transactions[i]
+            if not transaction.isValidTransaction():
+                return False
+            return True
+
+    def JSONencode(self):
+        return jsonpickle.encode(self)
 
 
 class Transaction(object):
@@ -225,6 +285,7 @@ class Transaction(object):
         if not self.signature or len(self.signature) == 0:
             print("No Signature!")
             return False
+        # print("Signature OK!")
         # Caso todos os demais fatores estiverem corretos, valida a transferência
         return True
 
