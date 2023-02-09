@@ -14,7 +14,8 @@ Blockchain.addTransaction("Heber", "Lenhador", 10, key, key)
 # Blockchain.pendingTransactions.append(transaction)
 
 Blockchain.minePendingTransactions("Ariel")
-
+Blockchain.minePendingTransactions("Heber")
+Blockchain.minePendingTransactions("Heber")
 
 # transactions = []
 
@@ -29,3 +30,5 @@ Blockchain.minePendingTransactions("Ariel")
 
 pp.pprint(Blockchain.chainJSONencode())
 print("Length: ", len(Blockchain.chain))
+
+print(Blockchain.getBalance("Ariel"))

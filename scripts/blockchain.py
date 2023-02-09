@@ -111,12 +111,12 @@ class Blockchain(object):
         return genesis
 
     # Cria um novo bloco na cadeia, se baseando no bloco anterior, caso não haja um, sinaliza como bloco anterior vazio
-    def addBlock(self, block):
-        if len(self.chain) > 0:
-            block.prev = self.getLastBlock().hash
-        else:
-            block.prev = "none"
-        self.chain.append(block)
+    # def addBlock(self, block):
+    #     if len(self.chain) > 0:
+    #         block.prev = self.getLastBlock().hash
+    #     else:
+    #         block.prev = "none"
+    #     self.chain.append(block)
 
     # Monta um arquivo JSON do estado da blockchain
     def chainJSONencode(self):
@@ -145,41 +145,41 @@ class Blockchain(object):
 
         return blockArrJSON
 
+    def chainJSONdecode(self, chainJSON):
+        chain = []
+        for blockJSON in chainJSON:
+            tArr = []
+            for tJSON in blockJSON["transactions"]:
+                transaction = Transaction(
+                    tJSON["sender"], tJSON["reciever"], tJSON["amt"]
+                )
+                transaction.time = tJSON["time"]
+                transaction.hash = tJSON["hash"]
+                tArr.append(transaction)
 
-def chainJSONdecode(self, chainJSON):
-    chain = []
-    for blockJSON in chainJSON:
-        tArr = []
-        for tJSON in blockJSON["transactions"]:
-            transaction = Transaction(tJSON["sender"], tJSON["reciever"], tJSON["amt"])
-            transaction.time = tJSON["time"]
-            transaction.hash = tJSON["hash"]
-            tArr.append(transaction)
+            block = Block(tArr, blockJSON["time"], blockJSON["index"])
+            block.hash = blockJSON["hash"]
+            block.prev = blockJSON["prev"]
+            block.nonse = blockJSON["nonse"]
+            block.gym = blockJSON["gym"]
 
-        block = Block(tArr, blockJSON["time"], blockJSON["index"])
-        block.hash = blockJSON["hash"]
-        block.prev = blockJSON["prev"]
-        block.nonse = blockJSON["nonse"]
-        block.gym = blockJSON["gym"]
+            chain.append(block)
+        return chain
 
-        chain.append(block)
-    return chain
-
-
-def getBalance(self, person):
-    balance = 0
-    for i in range(1, len(self.chain)):
-        block = self.chain[i]
-        try:
-            for j in range(0, len(block.transactions)):
-                transaction = block.transactions[j]
-                if transaction.sender == person:
-                    balance -= transaction.amt
-                if transaction.reciever == person:
-                    balance += transaction.amt
-        except AttributeError:
-            print("no transaction")
-    return balance + 100
+    def getBalance(self, person):
+        balance = 0
+        for i in range(1, len(self.chain)):
+            block = self.chain[i]
+            try:
+                for j in range(0, len(block.transactions)):
+                    transaction = block.transactions[j]
+                    if transaction.sender == person:
+                        balance -= transaction.amt
+                    if transaction.reciever == person:
+                        balance += transaction.amt
+            except AttributeError:
+                print("no transaction")
+        return balance + 100
 
 
 class Block(object):
