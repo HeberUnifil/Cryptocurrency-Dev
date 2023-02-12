@@ -20,19 +20,19 @@ class Blockchain(object):
         self.pendingTransactions = []
 
         # Blockchains possuem suas transações organizadas em fila, é necessário inicializar uma lista
-        self.difficulty = 2
+        self.difficulty = 3
         # Transação como recompensa de por mineração
-        self.minerRewards = 10  # * len(self.pendingTransactions)
-        self.blockSize = 10
+        self.minerRewards = 5  # * len(self.pendingTransactions)
+        self.blockSize = 1
         self.nodes = set()
         self.chain = [self.addGenesisBlock()]
 
-    def addTransaction(self, sender, reciever, amt, keyString, senderKey):
+    def addTransaction(self, sender, reciever, amt, fee, keyString, senderKey):
         # Checa se o remetente tem o valor a ser transferido
 
         if amt > self.getBalance(sender):
             print("Saldo Insuficiente")
-            print(self.getBalance(sender))
+            # print(self.getBalance(sender))
             return False
 
         # Importa as chaves tanto do remetente quanto do destinatário
@@ -49,7 +49,7 @@ class Blockchain(object):
             return False
 
         # Gera uma nova transação
-        transaction = Transaction(sender, reciever, (amt - self.minerRewards))
+        transaction = Transaction(sender, reciever, amt, fee)
 
         # assina a transação recém criada
         transaction.signTransaction(key, senderKey)
@@ -63,6 +63,7 @@ class Blockchain(object):
         self.pendingTransactions.append(transaction)
         return len(self.chain) + 1
 
+    # Gera chaves privadas e publicas para
     def generateKeys(self):
         # Define key, uma chave de chave RSA de 2048 bits
         key = RSA.generate(2048)
@@ -78,13 +79,31 @@ class Blockchain(object):
         # print(public_key.decode("ASCII"))
         return key.publickey().export_key().decode("ASCII")
 
-    def minePendingTransactions(self, miner):
-        lenPT = len(self.pendingTransactions)
+    # Retorna o balanço do usuárui checando os blocos da blockchain
+    def getBalance(self, person):
+        balance = 0
+        for i in range(0, len(self.chain)):
+            block = self.chain[i]
+            try:
+                for j in range(0, len(block.transactions)):
+                    transaction = block.transactions[j]
+                    if transaction.sender == person:
+                        balance -= transaction.amt + transaction.fee
+                    if transaction.reciever == person:
+                        balance += transaction.amt
+            except AttributeError:
+                print("no transaction")
+        return balance
 
-        # if(lenPT <= 1):
-        #     print("Not enough transactions to mine! (Must be > 1)")
-        #     return False;
-        # else:
+    def minePendingTransactions(self, miner):
+        # Checa se há transações para minerar
+        lenPT = len(self.pendingTransactions)
+        if lenPT < 1:
+            print("No transactions to mine!")
+            return False
+
+        # Checa o valor total da taxa de mineração
+        fee = 0
         for i in range(0, lenPT, self.blockSize):
             end = i + self.blockSize
             if i >= lenPT:
@@ -92,21 +111,42 @@ class Blockchain(object):
 
             transactionSlice = self.pendingTransactions[i:end]
 
+            for transaction in transactionSlice:
+                fee = +transaction.fee
+                if self.getBalance(transaction.sender) < transaction.amt:
+                    del transactionSlice[transactionSlice.index(transaction)]
+                    print("invalid transaction")
+
             newBlock = Block(
                 transactionSlice,
                 datetime.now().strftime("%d/%m/%Y, %H:%M:%S"),
                 len(self.chain),
             )
-            # print(type(self.getLastBlock()));
 
-            hashVal = self.getLastBlock().hash
-            newBlock.prev = hashVal
-            newBlock.mineBlock(self.difficulty)
-            self.chain.append(newBlock)
+            if newBlock.transactions != []:
+                hashVal = self.getLastBlock().hash
+                newBlock.prev = hashVal
+                newBlock.mineBlock(self.difficulty)
+                self.chain.append(newBlock)
+                print("Transaction Block Mined!")
+                rewardBlock = Block(
+                    [Transaction("Miner Rewards", miner, fee, 0)],
+                    datetime.now().strftime("%d/%m/%Y, %H:%M:%S"),
+                    len(self.chain),
+                )
+
+                hashVal2 = self.getLastBlock().hash
+                newBlock.prev = hashVal2
+                newBlock.mineBlock(self.difficulty)
+                print("Reward Block Mined!")
+                if fee != 0:
+                    self.chain.append(rewardBlock)
+
         print("Mining Transactions Success!")
+        print("Mining Reward:", fee)
 
-        payMiner = Transaction("Miner Rewards", miner, (self.minerRewards * lenPT))
-        self.pendingTransactions = [payMiner]
+        # payMiner = Transaction("Miner Rewards", miner, fee, 0)
+        self.pendingTransactions = []
         return True
 
     # Busca pelo bloco anterior da cadeia
@@ -115,7 +155,7 @@ class Blockchain(object):
 
     def addGenesisBlock(self):
         tArr = []
-        tArr.append(Transaction("Blockchain", "Heber", 100))
+        tArr.append(Transaction("Blockchain", "Heber", 100, 0))
         genesis = Block(tArr, datetime.now().strftime("%m/%d/%Y, %H:%M:%S"), 0)
 
         genesis.prev = "None"
@@ -148,6 +188,7 @@ class Blockchain(object):
                 tJSON["sender"] = transaction.sender
                 tJSON["reciever"] = transaction.reciever
                 tJSON["amt"] = transaction.amt
+                tJSON["fee"] = transaction.fee
                 tJSON["hash"] = transaction.hash
                 transactionsJSON.append(tJSON)
 
@@ -163,7 +204,7 @@ class Blockchain(object):
             tArr = []
             for tJSON in blockJSON["transactions"]:
                 transaction = Transaction(
-                    tJSON["sender"], tJSON["reciever"], tJSON["amt"]
+                    tJSON["sender"], tJSON["reciever"], tJSON["amt"], tJSON["fee"]
                 )
                 transaction.time = tJSON["time"]
                 transaction.hash = tJSON["hash"]
@@ -173,25 +214,9 @@ class Blockchain(object):
             block.hash = blockJSON["hash"]
             block.prev = blockJSON["prev"]
             block.nonse = blockJSON["nonse"]
-            block.gym = blockJSON["gym"]
 
             chain.append(block)
         return chain
-
-    def getBalance(self, person):
-        balance = 0
-        for i in range(0, len(self.chain)):
-            block = self.chain[i]
-            try:
-                for j in range(0, len(block.transactions)):
-                    transaction = block.transactions[j]
-                    if transaction.sender == person:
-                        balance -= transaction.amt
-                    if transaction.reciever == person:
-                        balance += transaction.amt
-            except AttributeError:
-                print("no transaction")
-        return balance
 
 
 class Block(object):
@@ -246,7 +271,7 @@ class Block(object):
             # print("hash attempt", self.hash)
             # print("hash desejado", hashPuzzle)
 
-        print("Block Mined!")
+        # print("Block Mined!")
         return True
 
     def hasValidTransactions(self):
@@ -262,13 +287,15 @@ class Block(object):
 
 class Transaction(object):
     # Inicialização da classe de Transaction
-    def __init__(self, sender, reciever, amt):
+    def __init__(self, sender, reciever, amt, fee):
         # Define o remetente da transação
         self.sender = sender
         # Define o destinatário da transação
         self.reciever = reciever
+        # Define Taxa de transação
+        self.fee = fee
         # Define a quantidade de tokens a ser transferida
-        self.amt = amt
+        self.amt = amt - self.fee
         # Define a data da transação
         self.time = datetime.now().strftime("%m/%d/%Y, %H:%M:%S")
         # Define o Hash de identificação da transação
@@ -283,6 +310,9 @@ class Transaction(object):
         return hashlib.sha256(hashEncoded).hexdigest()
 
     def isValidTransaction(self):
+        if self.amt <= 0:
+            return False
+
         # Checa se o Hash da transação é o mesmo hash que o criado na transação
         if self.hash != self.calculateHash():
             return False

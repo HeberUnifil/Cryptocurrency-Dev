@@ -10,21 +10,27 @@ key = Blockchain.generateKeys()
 # print(key)
 # print("")
 
-
-print(Blockchain.pendingTransactions)
+print(len(Blockchain.pendingTransactions))
 
 # Blockchain.minePendingTransactions("Ariel")
-Blockchain.addTransaction("Heber", "Lenhador", 20, key, key)
+Blockchain.addTransaction("Heber", "Lenhador", 50, 10, key, key)
+print(len(Blockchain.pendingTransactions))
+
+Blockchain.minePendingTransactions("Ariel")
+print(Blockchain.getBalance("Heber"))
+
+Blockchain.addTransaction("Heber", "Lenhador", 20, 5, key, key)
+Blockchain.addTransaction("Heber", "Lenhador", 10, 5, key, key)
+
 Blockchain.minePendingTransactions("Ariel")
 
-Blockchain.addTransaction("Heber", "Lenhador", 100, key, key)
-
+print(len(Blockchain.pendingTransactions))
 
 # print(Blockchain.chain)
 
 pp.pprint(Blockchain.chainJSONencode())
-print("Length: ", len(Blockchain.chain))
+# print("Length: ", len(Blockchain.chain))
 
 
-print(Blockchain.getBalance("Heber"))
 # print(Blockchain.pendingTransactions)
+# pp.pprint(Blockchain.pendingTransactions)
