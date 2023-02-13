@@ -99,7 +99,7 @@ class Blockchain(object):
         # Checa se há transações para minerar
         lenPT = len(self.pendingTransactions)
         if lenPT < 1:
-            print("No transactions to mine!")
+            print("No transactions to mine!\n#############")
             return False
 
         # Checa o valor total da taxa de mineração
@@ -115,7 +115,7 @@ class Blockchain(object):
                 fee = +transaction.fee
                 if self.getBalance(transaction.sender) < transaction.amt:
                     del transactionSlice[transactionSlice.index(transaction)]
-                    print("invalid transaction")
+                    print("invalid transaction\n#############")
 
             newBlock = Block(
                 transactionSlice,
@@ -124,11 +124,13 @@ class Blockchain(object):
             )
 
             if newBlock.transactions != []:
-                hashVal = self.getLastBlock().hash
-                newBlock.prev = hashVal
+                newBlock.prev = self.getLastBlock().hash
+
+                # print(newBlock.prev)
                 newBlock.mineBlock(self.difficulty)
                 self.chain.append(newBlock)
                 print("Transaction Block Mined!")
+
                 rewardBlock = Block(
                     [Transaction("Miner Rewards", miner, fee, 0)],
                     datetime.now().strftime("%d/%m/%Y, %H:%M:%S"),
@@ -136,14 +138,14 @@ class Blockchain(object):
                 )
 
                 hashVal2 = self.getLastBlock().hash
-                newBlock.prev = hashVal2
-                newBlock.mineBlock(self.difficulty)
+                # print(hashVal2)
+                rewardBlock.prev = hashVal2
+                rewardBlock.mineBlock(self.difficulty)
                 print("Reward Block Mined!")
                 if fee != 0:
                     self.chain.append(rewardBlock)
-
-        print("Mining Transactions Success!")
-        print("Mining Reward:", fee)
+                    print("Mining Reward:", fee)
+        print("Mining Transactions Success!\n#############")
 
         # payMiner = Transaction("Miner Rewards", miner, fee, 0)
         self.pendingTransactions = []
